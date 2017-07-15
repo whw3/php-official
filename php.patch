@@ -1,0 +1,20 @@
+--- php/7.1/fpm/alpine/Dockerfile	2017-07-10 04:30:55.139216223 -0500
++++ php/7.1/fpm/alpine/Dockerfile.rpi	2017-07-10 04:34:34.557846126 -0500
+@@ -4,7 +4,7 @@
+ # PLEASE DO NOT EDIT IT DIRECTLY.
+ #
+ 
+-FROM alpine:3.4
++FROM whw3/alpine
+ 
+ # persistent / runtime deps
+ ENV PHPIZE_DEPS \
+@@ -79,7 +79,7 @@
+ 		wget -O php.tar.xz.asc "$PHP_ASC_URL"; \
+ 		export GNUPGHOME="$(mktemp -d)"; \
+ 		for key in $GPG_KEYS; do \
+-			gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
++			gpg --keyserver ipv4.pool.sks-keyservers.net --recv-keys "$key"; \
+ 		done; \
+ 		gpg --batch --verify php.tar.xz.asc php.tar.xz; \
+ 		rm -r "$GNUPGHOME"; \
