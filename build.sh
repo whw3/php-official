@@ -6,24 +6,33 @@
 
 cd /srv/docker/php-official/
 git clone https://github.com/docker-library/php.git
-patch -p0 < php.patch
+#patch -p0 < php.patch
+cd ./php
+find . -name Dockerfile| xargs sed -i 's_FROM alpine:[0-9.]\+_FROM whw3/alpine:latest_;s_FROM debian:jessie_FROM whw3/rpi_'
+find . -name Dockerfile| xargs sed -i 's/ha.pool.sks-keyservers.net/ipv4.pool.sks-keyservers.net/'
+find . -name Dockerfile| xargs sed -i 's_ENTRYPOINT \["docker-php-entrypoint"\]_ENTRYPOINT \["/init"\]_'
 
-if [[ "$(docker images -q whw3/alpine 2> /dev/null)" == "" ]]; then
-    if [[ ! -d /srv/docker/alpine ]]; then
-        cd /srv/docker/
-        git clone https://github.com/whw3/alpine.git
-    fi
-    cd /srv/docker/alpine
-    git pull
-    /srv/docker/alpine/build.sh
-fi
-cd /srv/docker/php-official/php/7.1/fpm/alpine/
-grep PHP_VERSION Dockerfile| grep ENV| sed -e 's/ENV/export/;s/$/"/;s/VERSION /VERSION="/' > /srv/docker/php-official/PHP_VERSION
-source /srv/docker/php-official/PHP_VERSION
-RELEASE=$(echo $PHP_VERSION | sed 's/\.[0-9]\+$//')
-cat << EOF > options 
+
+TAGS=( $(grep -R "FROM whw" --include 'Dockerfile'|grep -v "zts"| cut -d: -f1| sort | awk '!/^ / && NF {print $1 " . off"}') )
+whiptail --title "Build Menu" --checklist --separate-output "Select " 18 48 12 "${TAGS[@]}" 2>BUILDLIST
+while read ITEM
+do
+    cd /srv/docker/php-official/php
+    WORKDIR=$(echo "$ITEM" | sed 's:/Dockerfile::');
+    RELEASE=$(echo "$WORKDIR"|cut -d/ -f1)
+    TAG=$(echo "$WORKDIR" | sed 's:'$RELEASE'::;s:/:-:g');
+    [[ "$TAG" = "" ]] && TAG="-cli"
+    echo "Buildiing ..."
+    cd $WORKDIR
+    grep PHP_VERSION Dockerfile| grep ENV| sed -e 's/ENV/export/;s/$/"/;s/VERSION /VERSION="/' > PHP_VERSION
+    source PHP_VERSION
+    cat << EOF > options
 export RELEASE="v$RELEASE"
-export TAGS=(whw3/php:$RELEASE whw3/php:latest)
+export TAGS=(whw3/php:$PHP_VERSION$TAG whw3/php:$RELEASE$TAG)
 EOF
+    cat options
+    docker build -t whw3/php:$PHP_VERSION$TAG .
+    docker tag whw3/php:$PHP_VERSION$TAG whw3/php:$RELEASE$TAG
 
-docker build -t whw3/php .
+done < BUILDLIST
+exit
