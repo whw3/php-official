@@ -8,7 +8,7 @@ cd /srv/docker/php-official/
 git clone https://github.com/docker-library/php.git
 #patch -p0 < php.patch
 cd ./php
-find . -name Dockerfile| xargs sed -i 's_FROM alpine:[0-9.]\+_FROM whw3/alpine:latest_;s_FROM debian:jessie_FROM whw3/rpi_'
+find . -name Dockerfile| xargs sed -i 's_FROM alpine:[0-9.]\+_FROM whw3/alpine:latest_;s_FROM debian:jessie_FROM whw3/rpi-s6_'
 find . -name Dockerfile| xargs sed -i 's/ha.pool.sks-keyservers.net/ipv4.pool.sks-keyservers.net/'
 find . -name Dockerfile| xargs sed -i 's_ENTRYPOINT \["docker-php-entrypoint"\]_ENTRYPOINT \["/init"\]_'
 
